@@ -18,6 +18,10 @@ public:
   void setSignal(bool signal)
   {
     this->go = signal;
+  }
+
+  void notify()
+  {
     notifyObservers();
   }
 
@@ -62,22 +66,24 @@ private:
 public:
   IntersectionController()
   {
-    northSouth.addObserver(this);
-    eastWest.addObserver(this);
     northSouth.setSignal(true); //Initially, North and Southbound "go"
     eastWest.setSignal(false);
+    northSouth.addObserver(this);
+    eastWest.addObserver(this);
   }
 
   void goNorthSouth()
   {
     northSouth.setSignal(true);
     eastWest.setSignal(false);
+    northSouth.notify();
   }
 
   void goEastWest()
   {
     eastWest.setSignal(true);
     northSouth.setSignal(false);
+    eastWest.notify();
   }
 
   void update()
