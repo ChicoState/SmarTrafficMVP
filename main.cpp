@@ -3,7 +3,8 @@
 #include "ObserverPattern.hpp"
 
 // The LightData is a model that represents whether a light is signaling to "go" or not
-class LightData
+// Model
+class LightData : public Observable
 {
 private:
   bool go;
@@ -18,6 +19,7 @@ public:
   void setSignal(bool signal)
   {
     go = signal;
+    notifyObservers(); 
   }
 
   bool signalGo()
@@ -28,6 +30,7 @@ public:
 
 
 //The view displays the directions to the user (drivers), like the traffic light itself
+//View
 class TrafficLight
 {
 public:
@@ -42,13 +45,14 @@ public:
       command = "STOP";
     std::cout<<"The "<<direction<<" traffic should: "<<command<<std::endl;
   }
+
 };
 
 
 
 //The controller delegates both north-south and east-west pairs of signals
 //and binds the sensor's actions to updating the views
-class IntersectionController
+class IntersectionController :public IObserver
 {
 private:
   LightData northSouth;
@@ -61,6 +65,8 @@ private:
 public:
   IntersectionController()
   {
+    northSouth.addObserver(this);
+    eastWest.addObserver(this);
     northSouth.setSignal(true); //Initially, North and Southbound "go"
     eastWest.setSignal(false);
   }
@@ -75,6 +81,14 @@ public:
   {
     eastWest.setSignal(true);
     northSouth.setSignal(false);
+  }
+
+  void update()
+  {
+    northbound.showSignal("north",northSouth.signalGo());
+    southbound.showSignal("south",northSouth.signalGo());
+    eastbound.showSignal("east",eastWest.signalGo());
+    westbound.showSignal("west",eastWest.signalGo());
   }
 };
 
