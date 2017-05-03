@@ -3,7 +3,7 @@
 #include "ObserverPattern.hpp"
 
 // The LightData is a model that represents whether a light is signaling to "go" or not
-class LightData
+class LightData : public Observable
 {
 private:
   bool go;
@@ -18,6 +18,7 @@ public:
   void setSignal(bool signal)
   {
     go = signal;
+    notifyObservers();
   }
 
   bool signalGo()
@@ -28,9 +29,19 @@ public:
 
 
 //The view displays the directions to the user (drivers), like the traffic light itself
-class TrafficLight
+class TrafficLight : public IObserver
 {
+private:
+  std::string direction;
+  LightData *canGo;
+
 public:
+  TrafficLight(std::string direction, LightData *canGo) 
+    : direction(direction), canGo(canGo)
+  {
+    canGo->addObserver(this);
+  }
+
   void showSignal(std::string direction, bool canGo) //interface override
   {
     std::string command;
@@ -41,6 +52,10 @@ public:
     else
       command = "STOP";
     std::cout<<"The "<<direction<<" traffic should: "<<command<<std::endl;
+  }
+
+  void update() {
+    showSignal(direction, canGo->signalGo());
   }
 };
 
@@ -60,6 +75,10 @@ private:
 
 public:
   IntersectionController()
+    : northbound("northbound", &northSouth)
+    , southbound("southbound", &northSouth)
+    , eastbound("eastbound", &eastWest)
+    , westbound("westbound", &eastWest)
   {
     northSouth.setSignal(true); //Initially, North and Southbound "go"
     eastWest.setSignal(false);
