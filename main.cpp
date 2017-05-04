@@ -29,19 +29,9 @@ public:
 
 
 //The view displays the directions to the user (drivers), like the traffic light itself
-class TrafficLight : public IObserver
+class TrafficLight
 {
-private:
-  std::string direction;
-  LightData *canGo;
-
 public:
-  TrafficLight(std::string direction, LightData *canGo) 
-    : direction(direction), canGo(canGo)
-  {
-    canGo->addObserver(this);
-  }
-
   void showSignal(std::string direction, bool canGo) //interface override
   {
     std::string command;
@@ -53,17 +43,13 @@ public:
       command = "STOP";
     std::cout<<"The "<<direction<<" traffic should: "<<command<<std::endl;
   }
-
-  void update() {
-    showSignal(direction, canGo->signalGo());
-  }
 };
 
 
 
 //The controller delegates both north-south and east-west pairs of signals
 //and binds the sensor's actions to updating the views
-class IntersectionController
+class IntersectionController: public IObserver
 {
 private:
   LightData northSouth;
@@ -74,14 +60,14 @@ private:
   TrafficLight westbound;
 
 public:
-  IntersectionController()
-    : northbound("northbound", &northSouth)
-    , southbound("southbound", &northSouth)
-    , eastbound("eastbound", &eastWest)
-    , westbound("westbound", &eastWest)
-  {
+  IntersectionController() {
     northSouth.setSignal(true); //Initially, North and Southbound "go"
     eastWest.setSignal(false);
+
+    // NOTE: northSouth and eastWest must always be updated together with
+    // eastWest updated last, otherwise some updates will be missed and views
+    // will not be notified until later. See discussion on #1 for details
+    eastWest.addObserver(this);
   }
 
   void goNorthSouth()
@@ -92,8 +78,16 @@ public:
 
   void goEastWest()
   {
-    eastWest.setSignal(true);
     northSouth.setSignal(false);
+    eastWest.setSignal(true);
+  }
+
+  void update()
+  {
+    northbound.showSignal("northbound", northSouth.signalGo());
+    southbound.showSignal("southbound", northSouth.signalGo());
+    eastbound.showSignal("eastbound", eastWest.signalGo());
+    westbound.showSignal("westbound", eastWest.signalGo());
   }
 };
 
