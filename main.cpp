@@ -71,19 +71,23 @@ public:
     northSouth.setSignal(true);
     eastWest.setSignal(false);
     northSouth.notifyObservers();
+    eastWest.notifyObservers();
   }
 
   void goEastWest()
   {
     eastWest.setSignal(true);
     northSouth.setSignal(false);
+    eastWest.notifyObservers();
     northSouth.notifyObservers();
   }
 
   void update()
   {
-    northbound.showSignal("North and South",northSouth.signalGo());
-    eastbound.showSignal("East and West",eastWest.signalGo());
+    northbound.showSignal("North",northSouth.signalGo());
+    southbound.showSignal("South",northSouth.signalGo());
+    eastbound.showSignal("East",eastWest.signalGo());
+    westbound.showSignal("West",eastWest.signalGo());
   }
 };
 
