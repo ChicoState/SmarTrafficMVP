@@ -3,7 +3,7 @@
 #include "ObserverPattern.hpp"
 
 // The LightData is a model that represents whether a light is signaling to "go" or not
-class LightData
+class LightData : public Observable
 {
 private:
   bool go;
@@ -18,6 +18,7 @@ public:
   void setSignal(bool signal)
   {
     go = signal;
+    notifyObservers();
   }
 
   bool signalGo()
@@ -48,7 +49,7 @@ public:
 
 //The controller delegates both north-south and east-west pairs of signals
 //and binds the sensor's actions to updating the views
-class IntersectionController
+class IntersectionController: public IObserver
 {
 private:
   LightData northSouth;
@@ -59,10 +60,14 @@ private:
   TrafficLight westbound;
 
 public:
-  IntersectionController()
-  {
+  IntersectionController() {
     northSouth.setSignal(true); //Initially, North and Southbound "go"
     eastWest.setSignal(false);
+
+    // NOTE: northSouth and eastWest must always be updated together with
+    // eastWest updated last, otherwise some updates will be missed and views
+    // will not be notified until later. See discussion on #1 for details
+    eastWest.addObserver(this);
   }
 
   void goNorthSouth()
@@ -73,8 +78,16 @@ public:
 
   void goEastWest()
   {
-    eastWest.setSignal(true);
     northSouth.setSignal(false);
+    eastWest.setSignal(true);
+  }
+
+  void update()
+  {
+    northbound.showSignal("northbound", northSouth.signalGo());
+    southbound.showSignal("southbound", northSouth.signalGo());
+    eastbound.showSignal("eastbound", eastWest.signalGo());
+    westbound.showSignal("westbound", eastWest.signalGo());
   }
 };
 
